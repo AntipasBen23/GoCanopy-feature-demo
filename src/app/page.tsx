@@ -2,42 +2,97 @@
 
 import { useState } from 'react';
 import { Upload, FileText, BarChart3, TrendingUp } from 'lucide-react';
+import FileUpload from '@/components/FileUpload';
+import ProcessingAnimation from '@/components/ProcessingAnimation';
+import ResultsDashboard from '@/components/ResultsDashboard';
+import ShareResults from '@/components/ShareResults';
+import { UploadedDocument, AnalysisResult } from './types';
+import { generateMockAnalysis } from '@/lib/mockData';
+import { saveAnalysis, getPortfolioInsights, formatHistorySummary } from '@/lib/storageUtils';
+import { simulateFileRead } from '@/lib/sampleDocuments';
+
+type AppState = 'upload' | 'processing' | 'results';
 
 export default function Home() {
-  const [isDragging, setIsDragging] = useState(false);
+  const [appState, setAppState] = useState<AppState>('upload');
+  const [currentDocument, setCurrentDocument] = useState<UploadedDocument | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
+  const portfolioInsights = getPortfolioInsights();
+  const historySummary = formatHistorySummary();
+
+  const handleFileProcessed = (document: UploadedDocument) => {
+    setCurrentDocument(document);
+    setAppState('processing');
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
+  const handleProcessingComplete = () => {
+    if (!currentDocument) return;
+
+    // Generate mock analysis
+    const analysis = generateMockAnalysis(
+      currentDocument.id,
+      currentDocument.documentType
+    );
+
+    // Save to localStorage
+    saveAnalysis(analysis);
+
+    setAnalysisResult(analysis);
+    setAppState('results');
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
+  const handleStartOver = () => {
+    setCurrentDocument(null);
+    setAnalysisResult(null);
+    setAppState('upload');
+  };
+
+  const handleShare = () => {
+    setShowShareModal(true);
+  };
+
+  const handleSampleClick = async (sampleId: string) => {
+    const document = await simulateFileRead(sampleId);
+    if (document) {
+      handleFileProcessed(document);
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  };
+  // Render based on state
+  if (appState === 'results' && analysisResult) {
+    return (
+      <>
+        <ResultsDashboard
+          analysis={analysisResult}
+          onStartOver={handleStartOver}
+          onShare={handleShare}
+        />
+        {showShareModal && (
+          <ShareResults
+            analysisId={analysisResult.id}
+            onClose={() => setShowShareModal(false)}
+          />
+        )}
+      </>
+    );
+  }
 
-  const handleFileUpload = (file: File) => {
-    console.log('File uploaded:', file.name);
-    // We'll handle this in the next component
-  };
+  if (appState === 'processing' && currentDocument) {
+    return (
+      <main className="min-h-screen bg-[var(--gocanopy-dark)] flex items-center justify-center p-4">
+        <div className="w-full max-w-3xl">
+          <ProcessingAnimation
+            documentName={currentDocument.name}
+            onComplete={handleProcessingComplete}
+          />
+        </div>
+      </main>
+    );
+  }
 
+  // Default: Upload state
   return (
     <main className="min-h-screen bg-[var(--gocanopy-dark)] relative overflow-hidden">
       {/* Background gradient effects */}
@@ -64,50 +119,21 @@ export default function Home() {
           <p className="text-gray-400 max-w-2xl mx-auto">
             Upload a real estate document and watch our AI extract, structure, and analyze it in real-time—just like institutional investors using GoCanopy every day.
           </p>
+
+          {/* Portfolio History Badge (if returning user) */}
+          {portfolioInsights.hasHistory && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--gocanopy-accent)]/10 border border-[var(--gocanopy-accent)]/30 rounded-full fade-in">
+              <div className="w-2 h-2 bg-[var(--gocanopy-accent)] rounded-full animate-pulse" />
+              <span className="text-sm text-[var(--gocanopy-accent)] font-medium">
+                {portfolioInsights.message}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Upload Zone */}
         <div className="mb-12">
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`
-              border-2 border-dashed rounded-2xl p-16 text-center transition-all duration-300
-              ${isDragging 
-                ? 'border-[var(--gocanopy-accent)] bg-[var(--gocanopy-accent)]/10 scale-[1.02]' 
-                : 'border-gray-700 bg-[var(--gocanopy-card-bg)]/50 hover:border-[var(--gocanopy-accent)]/50 hover:bg-[var(--gocanopy-card-bg)]'
-              }
-            `}
-          >
-            <div className="flex flex-col items-center gap-6">
-              <div className="w-20 h-20 bg-[var(--gocanopy-primary)]/20 rounded-full flex items-center justify-center">
-                <Upload className="w-10 h-10 text-[var(--gocanopy-accent)]" />
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-white">
-                  Drop your document here
-                </h3>
-                <p className="text-gray-400">
-                  or{' '}
-                  <label className="text-[var(--gocanopy-accent)] hover:text-[var(--gocanopy-gold)] cursor-pointer underline">
-                    browse files
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.xlsx,.xls,.doc,.docx"
-                      onChange={handleFileSelect}
-                    />
-                  </label>
-                </p>
-              </div>
-
-              <p className="text-sm text-gray-500">
-                Supports: PDF, Excel, Word • Max 10MB
-              </p>
-            </div>
-          </div>
+          <FileUpload onFileProcessed={handleFileProcessed} />
         </div>
 
         {/* Sample Documents */}
@@ -121,24 +147,24 @@ export default function Home() {
                 icon: FileText,
                 title: 'Sample Rent Roll',
                 description: 'Multi-family property with 120 units',
-                type: 'rent-roll',
+                sampleId: 'sample-rent-roll',
               },
               {
                 icon: BarChart3,
                 title: 'Sample Offering Memo',
                 description: 'Office building acquisition opportunity',
-                type: 'offering-memo',
+                sampleId: 'sample-offering-memo',
               },
               {
                 icon: TrendingUp,
                 title: 'Sample Asset Report',
                 description: 'Quarterly performance analysis',
-                type: 'asset-report',
+                sampleId: 'sample-asset-report',
               },
             ].map((sample, index) => (
               <button
                 key={index}
-                onClick={() => console.log('Load sample:', sample.type)}
+                onClick={() => handleSampleClick(sample.sampleId)}
                 className="group bg-[var(--gocanopy-card-bg)] hover:bg-[var(--gocanopy-primary)]/30 border border-gray-800 hover:border-[var(--gocanopy-accent)]/50 rounded-xl p-6 text-left transition-all duration-300"
               >
                 <div className="flex items-start gap-4">
@@ -158,6 +184,15 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {/* History Summary (if available) */}
+        {portfolioInsights.hasHistory && (
+          <div className="mb-12 p-4 bg-[var(--gocanopy-card-bg)]/50 border border-gray-800 rounded-xl text-center">
+            <p className="text-sm text-gray-400">
+              Your Portfolio: <span className="text-white font-medium">{historySummary}</span>
+            </p>
+          </div>
+        )}
 
         {/* Trust Indicators */}
         <div className="text-center space-y-4 pt-8 border-t border-gray-800">
