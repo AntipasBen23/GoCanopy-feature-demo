@@ -10,56 +10,56 @@ interface MetricsCardsProps {
 
 export default function MetricsCards({ metrics }: MetricsCardsProps) {
   const cards = [
-    {
-      icon: DollarSign,
-      label: 'Property Value',
-      value: formatCurrency(metrics.propertyValue),
-      change: '+12.3% vs. comps',
-      changeType: 'positive' as const,
-      iconBg: 'bg-emerald-500/10',
-      iconColor: 'text-emerald-500',
-    },
-    {
-      icon: Percent,
-      label: 'Cap Rate',
-      value: formatPercentage(metrics.capRate, 2),
-      change: '+0.4% above market',
-      changeType: 'positive' as const,
-      iconBg: 'bg-blue-500/10',
-      iconColor: 'text-blue-500',
-    },
-    {
-      icon: TrendingUp,
-      label: 'Occupancy Rate',
-      value: formatPercentage(metrics.occupancyRate, 1),
-      change: 'Strong demand',
-      changeType: 'neutral' as const,
-      iconBg: 'bg-purple-500/10',
-      iconColor: 'text-purple-500',
-    },
-    {
-      icon: Building2,
-      label: 'Net Operating Income',
-      value: formatCurrency(metrics.netOperatingIncome),
-      change: 'Annual',
-      changeType: 'neutral' as const,
-      iconBg: 'bg-amber-500/10',
-      iconColor: 'text-amber-500',
-    },
-  ];
+  {
+    icon: DollarSign,
+    label: 'Property Value',
+    value: formatCurrency(metrics.propertyValue),
+    change: '+12.3% vs. comps',
+    changeType: 'positive' as 'positive' | 'negative' | 'neutral',
+    iconBg: 'bg-emerald-500/10',
+    iconColor: 'text-emerald-500',
+  },
+  {
+    icon: Percent,
+    label: 'Cap Rate',
+    value: formatPercentage(metrics.capRate, 2),
+    change: '+0.4% above market',
+    changeType: 'positive' as 'positive' | 'negative' | 'neutral',
+    iconBg: 'bg-blue-500/10',
+    iconColor: 'text-blue-500',
+  },
+  {
+    icon: TrendingUp,
+    label: 'Occupancy Rate',
+    value: formatPercentage(metrics.occupancyRate, 1),
+    change: 'Strong demand',
+    changeType: 'neutral' as 'positive' | 'negative' | 'neutral',
+    iconBg: 'bg-purple-500/10',
+    iconColor: 'text-purple-500',
+  },
+  {
+    icon: Building2,
+    label: 'Net Operating Income',
+    value: formatCurrency(metrics.netOperatingIncome),
+    change: 'Annual',
+    changeType: 'neutral' as 'positive' | 'negative' | 'neutral',
+    iconBg: 'bg-amber-500/10',
+    iconColor: 'text-amber-500',
+  },
+];
 
-  // Add total units card if available
-  if (metrics.totalUnits) {
-    cards.push({
-      icon: Users,
-      label: 'Total Units',
-      value: metrics.totalUnits.toString(),
-      change: `Avg. rent ${formatCurrency(metrics.averageRent || 0)}`,
-      changeType: 'neutral' as const,
-      iconBg: 'bg-cyan-500/10',
-      iconColor: 'text-cyan-500',
-    });
-  }
+// Add total units card if available
+if (metrics.totalUnits) {
+  cards.push({
+    icon: Users,
+    label: 'Total Units',
+    value: metrics.totalUnits.toString(),
+    change: `Avg. rent ${formatCurrency(metrics.averageRent || 0)}`,
+    changeType: 'neutral' as 'positive' | 'negative' | 'neutral',
+    iconBg: 'bg-cyan-500/10',
+    iconColor: 'text-cyan-500',
+  });
+}
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

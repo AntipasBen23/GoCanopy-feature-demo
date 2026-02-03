@@ -59,7 +59,7 @@ export function loadSampleDocument(sampleId: string): UploadedDocument | null {
 }
 
 // Enhanced mock data for each sample type
-export const sampleEnhancements = {
+export const sampleEnhancements: Record<DocumentType, any> = {
   'rent-roll': {
     propertyName: 'Parkside Apartments',
     location: 'San Francisco, CA',
@@ -95,10 +95,11 @@ export const sampleEnhancements = {
       'Strategic disposition of 2 non-core assets completed',
     ],
   },
+  'unknown': null,
 };
 
 export function getSampleEnhancements(documentType: DocumentType) {
-  return sampleEnhancements[documentType] || null;
+  return sampleEnhancements[documentType];
 }
 
 // Simulate file reading delay
